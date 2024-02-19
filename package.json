@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "start": "nodemon"
   },
@@ -19,6 +18,7 @@
   "devDependencies": {
     "@rocketseat/eslint-config": "^2.2.2",
     "eslint": "^8.56.0",
-    "prisma": "^5.9.1"
+    "prisma": "^5.9.1",
+    "sucrase": "^3.35.0"
   }
 }
