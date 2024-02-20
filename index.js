@@ -1,19 +1,18 @@
-import express from 'express'
-import cors from 'cors'
-import dotenv from 'dotenv'
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
 
-import { router } from './src/routes/router'
+import { router } from "./src/routes/router";
 
-dotenv.config()
+dotenv.config();
 
-const app = express()
+const app = express();
 
-app.use(express.json())
-app.use(cors())
+app.use(express.json());
+app.use(cors());
+app.use(router);
 
-router(app)
-
-const PORT = process.env.PORT || 3333
+const PORT = process.env.PORT || 3333;
 app.listen(PORT, () => {
-  console.log(`Rodando na porta ${PORT}`)
-})
+  console.log(`Rodando na porta ${PORT}`);
+});

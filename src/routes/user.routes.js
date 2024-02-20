@@ -1,5 +1,9 @@
-import { createUser } from '../controllers/user.controller'
+import { Router } from "express";
 
-export const userRoutes = (app) => {
-  app.get('/users', createUser)
-}
+import { createUser } from "../controllers/user.controller";
+
+const router = Router();
+
+router.get("/register", createUser);
+
+export { router as userRoutes };
