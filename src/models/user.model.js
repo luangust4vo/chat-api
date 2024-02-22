@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { prisma } from "../services/prisma";
 
-const userSchema = z.object({
+const userRegisterSchema = z.object({
   name: z.string().trim().min(3, "O nome deve ter, no mínimo, 3 caracteres"),
   email: z.string().trim().email("Email inválido"),
   password: z
@@ -12,20 +12,34 @@ const userSchema = z.object({
     .min(6, "A senha precisa ter, no mínimo, 6 caracteres"),
 });
 
+const userLoginSchema = userRegisterSchema.partial({
+  name: true,
+});
+
 export class User {
-  constructor(data) {
+  constructor(data, isLogin = false) {
     this.errors = [];
     this._user = null;
+    this._isLogin = isLogin;
     this.data = this.validate(data);
   }
 
   validate(data) {
-    if (data.name === "" || data.email === "" || data.password === "") {
-      this.errors.push({ message: "Todos os campos são obrigatórios" });
-      return null;
+    if (this._isLogin) {
+      if (data.email === "" || data.password === "") {
+        this.errors.push({ message: "Todos os campos são obrigatórios" });
+        return null;
+      }
+    } else {
+      if (data.name === "" || data.email === "" || data.password === "") {
+        this.errors.push({ message: "Todos os campos são obrigatórios" });
+        return null;
+      }
     }
 
-    const validation = userSchema.safeParse(data);
+    const validation = this._isLogin
+      ? userLoginSchema.safeParse(data)
+      : userRegisterSchema.safeParse(data);
 
     if (!validation.success) {
       validation.error.errors.forEach((issue) => {
@@ -39,7 +53,12 @@ export class User {
   }
 
   async create() {
-    await this._emailAlreadyInUse();
+    this._user = await this._userExists();
+
+    if (this._user) {
+      this.errors.push({ message: "O email inserido já está em uso" });
+      return null;
+    }
 
     await this._hashPass();
 
@@ -50,6 +69,30 @@ export class User {
     return this._user;
   }
 
+  async login() {
+    this._user = await this._userExists();
+
+    if (!this._user) {
+      this.errors.push({ message: "Usuário não encontrado ou não existe" });
+      return null;
+    }
+
+    const isValidPass = await this._verifyPass();
+
+    if (!isValidPass) {
+      this.errors.push({ message: "Senha incorreta" });
+      return null;
+    }
+
+    return this._user;
+  }
+
+  async _verifyPass() {
+    const hashedPass = this._user.password;
+
+    return await bcrypt.compare(this.data.password, hashedPass);
+  }
+
   async _hashPass() {
     const pass = this.data.password;
     const salt = await bcrypt.genSalt();
@@ -57,12 +100,9 @@ export class User {
     this.data.password = await bcrypt.hash(pass, salt);
   }
 
-  async _emailAlreadyInUse() {
-    this._user = await prisma.user.findUnique({
+  async _userExists() {
+    return await prisma.user.findUnique({
       where: { email: this.data.email },
     });
-
-    if (this._user)
-      this.errors.push({ message: "O email inserido já está em uso" });
   }
 }
