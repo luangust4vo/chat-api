@@ -21,10 +21,10 @@ export class User {
     this.errors = [];
     this._user = null;
     this._isLogin = isLogin;
-    this.data = this.validate(data);
+    this.data = this._validate(data);
   }
 
-  validate(data) {
+  _validate(data) {
     if (this._isLogin) {
       if (data.email === "" || data.password === "") {
         this.errors.push({ message: "Todos os campos são obrigatórios" });
@@ -83,6 +83,24 @@ export class User {
       this.errors.push({ message: "Senha incorreta" });
       return null;
     }
+
+    return this._user;
+  }
+
+  async changePass() {
+    this._user = await this._userExists();
+
+    if (!this._user) {
+      this.errors.push({ message: "Usuário não encontrado ou não existe" });
+      return null;
+    }
+
+    await this._hashPass();
+
+    this._user = await prisma.user.update({
+      where: { email: this.data.email },
+      data: this.data,
+    });
 
     return this._user;
   }
