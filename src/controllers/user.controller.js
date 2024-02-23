@@ -71,3 +71,33 @@ export const changeUserPass = async (req, res) => {
     res.status(500).json(e);
   }
 };
+
+export const getUsers = async (req, res) => {
+  try {
+    const users = await User.findAll(req.body.searchTerm);
+
+    if (users.length === 0)
+      return res.status(400).json([{ message: "Nenhum usuário encontrado" }]);
+
+    res.status(200).json({ users });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json(e);
+  }
+};
+
+export const getUser = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const user = await User.findOne(userId);
+    const { id, name, email } = user;
+
+    if (!user)
+      return res.status(400).json([{ message: "Usuário não encontrado" }]);
+
+    return res.status(200).json({ id, name, email });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json(e);
+  }
+};
