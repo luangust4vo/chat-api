@@ -123,4 +123,44 @@ export class User {
       where: { email: this.data.email },
     });
   }
+
+  static async findAll(searchTerm) {
+    const select = {
+      id: true,
+      name: true,
+      email: true,
+      password: false,
+    };
+
+    return [
+      ...(await prisma.user.findMany({
+        where: {
+          name: { startsWith: `${searchTerm}`, mode: "insensitive" },
+        },
+        orderBy: {
+          name: "asc",
+        },
+        select,
+      })),
+      ...(await prisma.user.findMany({
+        where: {
+          name: {
+            contains: `${searchTerm}`,
+            mode: "insensitive",
+            not: { startsWith: searchTerm },
+          },
+        },
+        orderBy: {
+          name: "asc",
+        },
+        select,
+      })),
+    ];
+  }
+
+  static async findOne(userId) {
+    return await prisma.user.findUnique({
+      where: { id: userId },
+    });
+  }
 }
